@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aplikasi Presensi Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f5f5f5; }
+    input, button { padding: 0.5em; margin: 0.3em 0; width: 100%; }
+    .card { background: white; padding: 1em; margin-top: 1em; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <h2>Login Presensi</h2>
+  <div class="card">
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div class="card" id="loggedin" style="display:none;">
+    <p>Halo, <span id="username">User</span> 👋</p>
+    <button onclick="logout()">Logout</button>
+
+    <h3>Presensi Hari Ini</h3>
+    <input id="kelas_id" type="text" placeholder="ID Kelas (uuid)" />
+    <input id="lokasi" type="text" placeholder="Lokasi/IP" />
+    <button onclick="isiPresensi()">Isi Presensi</button>
+
+    <h4>Riwayat Presensi</h4>
+    <ul id="riwayat"></ul>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://ciklmlxkcsvlplsteftn.supabase.co'
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpa2xtbHhrY3N2bHBsc3RlZnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NzE0NDMsImV4cCI6MjA2NjA0NzQ0M30.4rPHoYUZJ-X1tFisUk10U4y4bBj4P8LnIIB7nsPs7OM'
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert('Login gagal: ' + error.message);
+      } else {
+        loadUser();
+      }
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      document.getElementById('loggedin').style.display = 'none';
+    }
+
+    async function loadUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        document.getElementById('loggedin').style.display = 'block';
+        document.getElementById('username').textContent = user.email;
+        loadPresensi(user.id);
+      }
+    }
+
+    async function isiPresensi() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const kelas_id = document.getElementById('kelas_id').value;
+      const lokasi = document.getElementById('lokasi').value;
+
+      const { error } = await supabase
+        .from('presensi')
+        .insert([{ user_id: user.id, kelas_id, lokasi, status: 'hadir' }]);
+
+      if (error) {
+        alert('Gagal presensi: ' + error.message);
+      } else {
+        alert('Presensi berhasil!');
+        loadPresensi(user.id);
+      }
+    }
+
+    async function loadPresensi(user_id) {
+      const { data, error } = await supabase
+        .from('presensi')
+        .select('*')
+        .eq('user_id', user_id)
+        .order('waktu_presensi', { ascending: false });
+
+      const ul = document.getElementById('riwayat');
+      ul.innerHTML = '';
+      if (data) {
+        data.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.waktu_presensi} | Lokasi: ${item.lokasi}`;
+          ul.appendChild(li);
+        });
+      }
+    }
+
+    // Cek login saat halaman dibuka
+    loadUser();
+  </script>
+
+</body>
+</html>
