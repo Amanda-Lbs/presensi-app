@@ -1,0 +1,20 @@
+{
+  "name": "presensi-app",
+  "version": "1.0.0",
+  "description": "Aplikasi presensi menggunakan Supabase dan HTML/JS",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "live-server public/"
+  },
+  "keywords": [
+    "supabase",
+    "presensi",
+    "html",
+    "javascript"
+  ],
+  "author": "Namamu",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}

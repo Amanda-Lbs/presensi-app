@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="card">
+    <h2>Login</h2>
+    <label>Email</label>
+    <input type="email" id="email" placeholder="Masukkan email" />
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Masukkan password" />
+    <button onclick="login()">Login</button>
+    <p>Belum punya akun? <a href="/register">Daftar</a></p>
+  </div>
+
+  <script type="module">
+    import { supabase } from '../services/supabase.js';
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert("Login gagal: " + error.message);
+      } else {
+        window.location.href = "/dashboard";
+      }
+    }
+  </script>
+</body>
+</html>
