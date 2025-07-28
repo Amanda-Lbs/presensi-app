@@ -1,20 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aplikasi Presensi Supabase</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: sans-serif; padding: 2em; background: #f5f5f5; }
-    input, button { padding: 0.5em; margin: 0.3em 0; width: 100%; }
-    .card { background: white; padding: 1em; margin-top: 1em; border-radius: 8px; }
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+      background: #f5f5f5;
+      max-width: 500px;
+      margin: auto;
+    }
+    input, button {
+      padding: 0.5em;
+      margin: 0.3em 0;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .card {
+      background: white;
+      padding: 1em;
+      margin-top: 1em;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2, h3, h4 {
+      margin-bottom: 0.5em;
+    }
   </style>
 </head>
 <body>
 
   <h2>Login Presensi</h2>
-  <div class="card">
+
+  <div class="card" id="login-card">
     <input id="email" type="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
     <button onclick="login()">Login</button>
@@ -34,14 +56,19 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://ciklmlxkcsvlplsteftn.supabase.co'
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpa2xtbHhrY3N2bHBsc3RlZnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NzE0NDMsImV4cCI6MjA2NjA0NzQ0M30.4rPHoYUZJ-X1tFisUk10U4y4bBj4P8LnIIB7nsPs7OM'
+    const SUPABASE_URL = 'https://ciklmlxkcsvlplsteftn.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpa2xtbHhrY3N2bHBsc3RlZnRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NzE0NDMsImV4cCI6MjA2NjA0NzQ0M30.4rPHoYUZJ-X1tFisUk10U4y4bBj4P8LnIIB7nsPs7OM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        alert("Email dan password harus diisi.");
+        return;
+      }
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -55,12 +82,14 @@
     async function logout() {
       await supabase.auth.signOut();
       document.getElementById('loggedin').style.display = 'none';
+      document.getElementById('login-card').style.display = 'block';
     }
 
     async function loadUser() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (user) {
         document.getElementById('loggedin').style.display = 'block';
+        document.getElementById('login-card').style.display = 'none';
         document.getElementById('username').textContent = user.email;
         loadPresensi(user.id);
       }
@@ -70,6 +99,11 @@
       const { data: { user } } = await supabase.auth.getUser();
       const kelas_id = document.getElementById('kelas_id').value;
       const lokasi = document.getElementById('lokasi').value;
+
+      if (!kelas_id || !lokasi) {
+        alert("Kelas ID dan lokasi harus diisi.");
+        return;
+      }
 
       const { error } = await supabase
         .from('presensi')
@@ -95,7 +129,7 @@
       if (data) {
         data.forEach(item => {
           const li = document.createElement('li');
-          li.textContent = `${item.waktu_presensi} | Lokasi: ${item.lokasi}`;
+          li.textContent = `${new Date(item.waktu_presensi).toLocaleString()} | Lokasi: ${item.lokasi}`;
           ul.appendChild(li);
         });
       }
